@@ -1,6 +1,6 @@
 # Workout App
 
-A session-based workout logging system with Google Sheets integration.
+A session-based workout logging system with Google Sheets integration and mobile interface.
 
 ## Features
 

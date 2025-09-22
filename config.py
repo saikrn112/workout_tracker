@@ -8,6 +8,7 @@ import os
 # Server Configuration
 BACKEND_PORT = int(os.getenv('BACKEND_PORT', 5001))
 FRONTEND_PORT = int(os.getenv('FRONTEND_PORT', 8010))
+MOBILE_PORT = int(os.getenv('MOBILE_PORT', 8080))
 
 # Backend Configuration
 BACKEND_HOST = os.getenv('BACKEND_HOST', 'localhost')
