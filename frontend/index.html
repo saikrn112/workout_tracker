@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Logger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .connection-status {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        .status-dot.disconnected {
+            background: #f44336;
+        }
+
+        .status-dot.connecting {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .template-selector {
+            margin-bottom: 30px;
+        }
+
+        .template-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .template-btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .template-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .template-btn.active {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+        }
+
+        .exercise-list {
+            margin-bottom: 30px;
+        }
+
+        .exercise-item {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 15px;
+            border-left: 4px solid #4facfe;
+            transition: all 0.3s ease;
+        }
+
+        .exercise-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .exercise-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .exercise-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .add-set-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .add-set-btn:hover {
+            background: #3b8bfe;
+        }
+
+        .sets-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .set-row {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
+        }
+
+        .set-number {
+            font-weight: 600;
+            color: #666;
+            min-width: 40px;
+            font-size: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .set-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .set-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.1);
+        }
+
+        .remove-set-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s ease;
+        }
+
+        .remove-set-btn:hover {
+            background: #ff5252;
+        }
+
+        .log-workout-btn {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .log-workout-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .log-workout-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .log-workout-btn.logging {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        .workout-history {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            border-left: 4px solid #764ba2;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-date {
+            font-weight: 600;
+            color: #764ba2;
+        }
+
+        .history-template {
+            color: #666;
+            font-size: 0.9rem;
+            background: rgba(118, 75, 162, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .history-exercises {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            animation: slideIn 0.3s ease;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .utilities {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .utility-btn {
+            padding: 10px 15px;
+            border: 2px solid #4facfe;
+            background: transparent;
+            color: #4facfe;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .utility-btn:hover {
+            background: #4facfe;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .template-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .set-row {
+                grid-template-columns: auto 1fr 1fr;
+                gap: 8px;
+            }
+
+            .remove-set-btn {
+                grid-column: span 3;
+                justify-self: center;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 Workout Logger</h1>
+            <p>Track your workouts with real-time Google Sheets sync</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting to backend...</span>
+            </div>
+            <button class="utility-btn" onclick="checkConnection()" style="padding: 5px 10px; font-size: 0.8rem;">
+                Refresh
+            </button>
+        </div>
+
+        <!-- Template Selector -->
+        <div class="card">
+            <div class="template-selector">
+                <h2>Choose Your Workout</h2>
+                <div class="template-buttons" id="templateButtons">
+                    <!-- Templates will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Exercise List -->
+        <div class="card" id="exerciseCard" style="display: none;">
+            <div class="exercise-list">
+                <h3>Today's Workout</h3>
+                <div id="exerciseList">
+                    <!-- Exercises will be loaded here -->
+                </div>
+            </div>
+
+            <button id="logWorkoutBtn" class="log-workout-btn" onclick="logWorkout()" disabled>
+                <span id="logBtnText">Log Workout</span>
+            </button>
+
+            <div class="utilities">
+                <button class="utility-btn" onclick="viewSpreadsheet()">View Sheet</button>
+                <button class="utility-btn" onclick="showStats()">Statistics</button>
+                <button class="utility-btn" onclick="clearWorkout()">Clear</button>
+            </div>
+        </div>
+
+        <!-- Workout History -->
+        <div class="card">
+            <h3>Recent Workouts</h3>
+            <div class="workout-history" id="workoutHistory">
+                <!-- History will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/workout-api.js"></script>
+    <script src="js/workout-ui.js"></script>
+</body>
+</html>

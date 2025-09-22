@@ -1,0 +1,255 @@
+{
+  "test_run_info": {
+    "start_time": "2025-09-21T21:19:31.736777",
+    "end_time": "2025-09-21T21:19:45.194282",
+    "total_tests": 15,
+    "passed": 6,
+    "failed": 9,
+    "errors": 0,
+    "success_rate": "40.0%"
+  },
+  "test_results": [
+    {
+      "timestamp": "2025-09-21T21:19:31.739522",
+      "test_name": "01_Backend_Health",
+      "status": "FAIL",
+      "details": "Backend unhealthy: Unknown error",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:32.258254",
+      "test_name": "02_Headers_Check",
+      "status": "PASS",
+      "details": "Found session_status column in 17 headers",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:33.104642",
+      "test_name": "03_No_Active_Session",
+      "status": "PASS",
+      "details": "No active session found (expected)",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:34.269425",
+      "test_name": "04_Start_Session",
+      "status": "PASS",
+      "details": "Started session: 2025-09-21_upper1",
+      "data": {
+        "session_id": "2025-09-21_upper1"
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:19:35.083175",
+      "test_name": "05_Verify_Active_Session",
+      "status": "PASS",
+      "details": "Active session found: upper1 with 6 exercises",
+      "data": {
+        "session": {
+          "date": "2025-09-21",
+          "exercises": {
+            "DB Incline bench press": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "DB Incline bench press",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "DB lateral raises": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "DB lateral raises",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Flat bar cable curls": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Flat bar cable curls",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Lat pulldown (Moderate load)": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Lat pulldown (Moderate load)",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Pec dec fly": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Pec dec fly",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Tricep pushdowns": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Tricep pushdowns",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ]
+          },
+          "template": "upper1"
+        }
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:19:35.914200",
+      "test_name": "06_Log_First_Set",
+      "status": "FAIL",
+      "details": "Failed to log set: invalid literal for int() with base 10: ''",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:36.702360",
+      "test_name": "07_Verify_Set_Persisted",
+      "status": "FAIL",
+      "details": "Set not found in session. Available sets: [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'Pec dec fly', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}]",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:37.763035",
+      "test_name": "08_Log_Multiple_Sets",
+      "status": "FAIL",
+      "details": "Only logged 0/2 sets",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:38.564467",
+      "test_name": "09_Log_Different_Exercise",
+      "status": "FAIL",
+      "details": "Failed to log different exercise: invalid literal for int() with base 10: ''",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:39.346394",
+      "test_name": "10_Amend_Existing_Set",
+      "status": "FAIL",
+      "details": "Failed to amend set: invalid literal for int() with base 10: ''",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:40.143479",
+      "test_name": "11_Verify_Amendment_Persisted",
+      "status": "FAIL",
+      "details": "Amendment not found. Set 1 data: None",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:42.215725",
+      "test_name": "12_Session_Persistence",
+      "status": "PASS",
+      "details": "Session persisted across 'leave/return': upper1",
+      "data": {
+        "exercises_count": 6
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:19:43.029276",
+      "test_name": "13_Complete_Session",
+      "status": "PASS",
+      "details": "Session completed successfully",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:43.825461",
+      "test_name": "14_No_Active_After_Complete",
+      "status": "FAIL",
+      "details": "Active session still exists after completion: {'date': '2025-09-21', 'exercises': {'DB Incline bench press': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'DB Incline bench press', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}], 'DB lateral raises': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'DB lateral raises', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}], 'Flat bar cable curls': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'Flat bar cable curls', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}], 'Lat pulldown (Moderate load)': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'Lat pulldown (Moderate load)', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}], 'Pec dec fly': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'Pec dec fly', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}], 'Tricep pushdowns': [{'_part_idx': '', '_set_row': '', 'date': '2025-09-21', 'exercise': 'Tricep pushdowns', 'feeling': '', 'raw_cell': '', 'reps': '', 'reps_raw_part': '', 'segment_note': '', 'session_status': 'active', 'set_number': '', 'setting': '', 'side': '', 'source_file': 'workout_app', 'template': 'upper1', 'weight_lbs': '', 'weight_unit_raw': ''}]}, 'template': 'upper1'}",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:19:44.688118",
+      "test_name": "15_Start_And_Cancel",
+      "status": "FAIL",
+      "details": "Failed to start session for cancel test: {'error': \"Active session already exists for template 'upper1' on 2025-09-21\", 'success': False}",
+      "data": {}
+    }
+  ]
+}

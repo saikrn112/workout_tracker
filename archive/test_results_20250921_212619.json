@@ -1,0 +1,326 @@
+{
+  "test_run_info": {
+    "start_time": "2025-09-21T21:26:03.033807",
+    "end_time": "2025-09-21T21:26:19.862746",
+    "total_tests": 15,
+    "passed": 11,
+    "failed": 4,
+    "errors": 0,
+    "success_rate": "73.3%"
+  },
+  "test_results": [
+    {
+      "timestamp": "2025-09-21T21:26:03.036100",
+      "test_name": "01_Backend_Health",
+      "status": "FAIL",
+      "details": "Backend unhealthy: Unknown error",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:03.547899",
+      "test_name": "02_Headers_Check",
+      "status": "PASS",
+      "details": "Found session_status column in 17 headers",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:04.458669",
+      "test_name": "03_No_Active_Session",
+      "status": "FAIL",
+      "details": "Unexpected active session found: upper1 on 2025-09-21",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:05.328309",
+      "test_name": "04_Start_Session",
+      "status": "FAIL",
+      "details": "Failed to start session: Active session already exists for template 'upper1' on 2025-09-21",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:06.183833",
+      "test_name": "05_Verify_Active_Session",
+      "status": "PASS",
+      "details": "Active session found: upper1 with 6 exercises",
+      "data": {
+        "session": {
+          "date": "2025-09-21",
+          "exercises": {
+            "DB Incline bench press": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "DB Incline bench press",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "DB lateral raises": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "DB lateral raises",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Flat bar cable curls": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Flat bar cable curls",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Lat pulldown (Moderate load)": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Lat pulldown (Moderate load)",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Pec dec fly": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Pec dec fly",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ],
+            "Tricep pushdowns": [
+              {
+                "_part_idx": "",
+                "_set_row": "",
+                "date": "2025-09-21",
+                "exercise": "Tricep pushdowns",
+                "feeling": "",
+                "raw_cell": "",
+                "reps": "",
+                "reps_raw_part": "",
+                "segment_note": "",
+                "session_status": "active",
+                "set_number": "",
+                "setting": "",
+                "side": "",
+                "source_file": "workout_app",
+                "template": "upper1",
+                "weight_lbs": "",
+                "weight_unit_raw": ""
+              }
+            ]
+          },
+          "template": "upper1"
+        }
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:07.279992",
+      "test_name": "06_Log_First_Set",
+      "status": "PASS",
+      "details": "Logged Pec dec fly set 1: 50lb x 12 reps",
+      "data": {
+        "exercise": "Pec dec fly",
+        "set_number": 1,
+        "weight": "50",
+        "reps": "12",
+        "notes": "Test set 1"
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:08.202143",
+      "test_name": "07_Verify_Set_Persisted",
+      "status": "PASS",
+      "details": "Set persisted: 50lb x 12 reps",
+      "data": {
+        "found_set": {
+          "_part_idx": "",
+          "_set_row": "",
+          "date": "2025-09-21",
+          "exercise": "Pec dec fly",
+          "feeling": "",
+          "raw_cell": "",
+          "reps": "12",
+          "reps_raw_part": "",
+          "segment_note": "",
+          "session_status": "active",
+          "set_number": "1",
+          "setting": "",
+          "side": "",
+          "source_file": "workout_app",
+          "template": "upper1",
+          "weight_lbs": "50",
+          "weight_unit_raw": ""
+        }
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:10.034558",
+      "test_name": "08_Log_Multiple_Sets",
+      "status": "PASS",
+      "details": "Logged 2/2 additional sets for Pec dec fly",
+      "data": {
+        "test_sets": [
+          {
+            "set_number": 2,
+            "weight": "55",
+            "reps": "10",
+            "notes": "Increased weight"
+          },
+          {
+            "set_number": 3,
+            "weight": "60",
+            "reps": "8",
+            "notes": "Final set"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:11.210858",
+      "test_name": "09_Log_Different_Exercise",
+      "status": "PASS",
+      "details": "Logged DB Incline bench press set 1: 45lb x 15 reps",
+      "data": {
+        "exercise": "DB Incline bench press",
+        "set_number": 1,
+        "weight": "45",
+        "reps": "15",
+        "notes": "Different exercise test"
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:12.541135",
+      "test_name": "10_Amend_Existing_Set",
+      "status": "PASS",
+      "details": "Amended Pec dec fly set 1: 52lb x 14 reps (was 50lb x 12)",
+      "data": {
+        "exercise": "Pec dec fly",
+        "set_number": 1,
+        "weight": "52",
+        "reps": "14",
+        "notes": "Amended test set"
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:13.372121",
+      "test_name": "11_Verify_Amendment_Persisted",
+      "status": "PASS",
+      "details": "Amendment persisted: 52lb x 14 reps",
+      "data": {
+        "amended_set": {
+          "_part_idx": "",
+          "_set_row": "",
+          "date": "2025-09-21",
+          "exercise": "Pec dec fly",
+          "feeling": "",
+          "raw_cell": "",
+          "reps": "14",
+          "reps_raw_part": "",
+          "segment_note": "Amended test set",
+          "session_status": "active",
+          "set_number": "1",
+          "setting": "",
+          "side": "",
+          "source_file": "workout_app",
+          "template": "upper1",
+          "weight_lbs": "52",
+          "weight_unit_raw": ""
+        }
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:15.522792",
+      "test_name": "12_Session_Persistence",
+      "status": "PASS",
+      "details": "Session persisted across 'leave/return': upper1",
+      "data": {
+        "exercises_count": 6
+      }
+    },
+    {
+      "timestamp": "2025-09-21T21:26:16.803829",
+      "test_name": "13_Complete_Session",
+      "status": "PASS",
+      "details": "Session completed successfully",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:17.600992",
+      "test_name": "14_No_Active_After_Complete",
+      "status": "PASS",
+      "details": "No active session after completion (expected)",
+      "data": {}
+    },
+    {
+      "timestamp": "2025-09-21T21:26:19.360417",
+      "test_name": "15_Start_And_Cancel",
+      "status": "FAIL",
+      "details": "Session still active after cancel",
+      "data": {}
+    }
+  ]
+}

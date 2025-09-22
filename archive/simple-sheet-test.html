@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Google Sheets Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #3367d6; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4285f4;
+            background: #f8f9fa;
+        }
+        .success { border-left-color: #34a853; background: #e8f5e8; }
+        .error { border-left-color: #ea4335; background: #fce8e6; }
+        .warning { border-left-color: #fbbc04; background: #fef7e0; }
+        #log {
+            background: #f8f9fa;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .sheet-link {
+            background: #34a853;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .sheet-link a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Simple Google Sheets Test</h1>
+        
+        <div class="status">
+            <strong>Configuration:</strong><br>
+            Client ID: YOUR_GOOGLE_CLIENT_ID<br>
+            API Key: YOUR_GOOGLE_API_KEY<br>
+            <strong>Current URL:</strong> <span id="currentUrl"></span>
+        </div>
+
+        <div class="status warning">
+            <strong>⚠️ Important:</strong> Make sure to add this URL to your Google Cloud Console OAuth authorized origins:
+            <br><code id="requiredOrigin"></code>
+        </div>
+
+        <button onclick="testConnection()">🔗 Test Google API Connection</button>
+        <button onclick="createSheet()" id="createBtn" disabled>📊 Create Test Sheet</button>
+        <button onclick="clearLog()">🗑️ Clear Log</button>
+
+        <div id="result"></div>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+        const API_KEY = 'YOUR_GOOGLE_API_KEY';
+        const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
+        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+        let gapi;
+        let isInitialized = false;
+        let isAuthenticated = false;
+
+        // Show current URL info
+        document.getElementById('currentUrl').textContent = window.location.origin;
+        document.getElementById('requiredOrigin').textContent = window.location.origin;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            logDiv.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function showResult(message, type = 'status') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testConnection() {
+            try {
+                log('Starting Google API connection test...');
+                showResult('Testing connection...', 'status');
+
+                // Load Google API
+                if (!window.gapi) {
+                    log('Loading Google API script...');
+                    await loadGoogleAPI();
+                    log('Google API script loaded');
+                }
+
+                // Initialize with better error handling
+                log('Initializing Google API client...');
+                await initializeWithRetry();
+                
+                log('Testing authentication...');
+                await authenticate();
+                
+                isInitialized = true;
+                isAuthenticated = true;
+                document.getElementById('createBtn').disabled = false;
+                
+                showResult('✅ Connection successful! You can now create a test sheet.', 'success');
+                log('✅ All tests passed! Ready to create sheets.');
+
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                showResult(`❌ Connection failed: ${error.message}`, 'error');
+                
+                if (error.message.includes('cookiePolicy') || error.message.includes('origin')) {
+                    showResult(`❌ OAuth Error: Please add "${window.location.origin}" to your Google Cloud Console OAuth authorized origins.`, 'error');
+                }
+            }
+        }
+
+        function loadGoogleAPI() {
+            return new Promise((resolve, reject) => {
+                if (window.gapi) {
+                    gapi = window.gapi;
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.onload = () => {
+                    gapi = window.gapi;
+                    resolve();
+                };
+                script.onerror = () => reject(new Error('Failed to load Google API'));
+                document.head.appendChild(script);
+            });
+        }
+
+        function initializeWithRetry() {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Initialization timeout - check your API credentials'));
+                }, 20000);
+
+                gapi.load('client:auth2', {
+                    callback: async () => {
+                        clearTimeout(timeout);
+                        try {
+                            // Initialize with explicit cookie policy
+                            await gapi.client.init({
+                                apiKey: API_KEY,
+                                clientId: CLIENT_ID,
+                                discoveryDocs: [DISCOVERY_DOC],
+                                scope: SCOPES,
+                                // Add cookie policy to handle localhost
+                                cookiepolicy: 'single_host_origin'
+                            });
+                            resolve();
+                        } catch (error) {
+                            reject(new Error(`Client initialization failed: ${error.message}`));
+                        }
+                    },
+                    onerror: (error) => {
+                        clearTimeout(timeout);
+                        reject(new Error(`GAPI load failed: ${JSON.stringify(error)}`));
+                    }
+                });
+            });
+        }
+
+        function authenticate() {
+            return new Promise((resolve, reject) => {
+                try {
+                    const authInstance = gapi.auth2.getAuthInstance();
+                    
+                    if (!authInstance) {
+                        reject(new Error('Auth instance not available - check your Client ID'));
+                        return;
+                    }
+
+                    if (authInstance.isSignedIn.get()) {
+                        log('Already signed in');
+                        resolve();
+                        return;
+                    }
+
+                    log('Opening sign-in popup...');
+                    authInstance.signIn({
+                        prompt: 'select_account'
+                    }).then((user) => {
+                        if (user.isSignedIn()) {
+                            const profile = user.getBasicProfile();
+                            log(`Signed in as: ${profile.getName()}`);
+                            resolve();
+                        } else {
+                            reject(new Error('Sign in failed'));
+                        }
+                    }).catch((error) => {
+                        if (error.error === 'popup_closed_by_user') {
+                            reject(new Error('Sign in cancelled'));
+                        } else {
+                            reject(new Error(`Sign in error: ${error.error || error.message}`));
+                        }
+                    });
+                } catch (error) {
+                    reject(new Error(`Authentication error: ${error.message}`));
+                }
+            });
+        }
+
+        async function createSheet() {
+            if (!isInitialized || !isAuthenticated) {
+                showResult('❌ Please test connection first', 'error');
+                return;
+            }
+
+            try {
+                log('Creating Google Sheet...');
+                showResult('Creating sheet...', 'status');
+
+                const response = await gapi.client.sheets.spreadsheets.create({
+                    resource: {
+                        properties: {
+                            title: `Workout Logger Test - ${new Date().toLocaleString()}`
+                        },
+                        sheets: [{
+                            properties: {
+                                title: 'Workout Log',
+                                gridProperties: {
+                                    rowCount: 1000,
+                                    columnCount: 10
+                                }
+                            }
+                        }]
+                    }
+                });
+
+                const spreadsheetId = response.result.spreadsheetId;
+                const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+                
+                log(`Sheet created with ID: ${spreadsheetId}`);
+
+                // Add workout data headers and sample data
+                await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: spreadsheetId,
+                    range: 'Workout Log!A1:F4',
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: [
+                            ['Date', 'Template', 'Exercise', 'Set', 'Weight', 'Reps'],
+                            [new Date().toLocaleDateString(), 'Upper 1', 'Bench Press', '1', '135', '8'],
+                            [new Date().toLocaleDateString(), 'Upper 1', 'Bench Press', '2', '135', '7'],
+                            [new Date().toLocaleDateString(), 'Upper 1', 'Bent Over Row', '1', '115', '10']
+                        ]
+                    }
+                });
+
+                // Format the header row
+                await gapi.client.sheets.spreadsheets.batchUpdate({
+                    spreadsheetId: spreadsheetId,
+                    resource: {
+                        requests: [{
+                            repeatCell: {
+                                range: {
+                                    sheetId: 0,
+                                    startRowIndex: 0,
+                                    endRowIndex: 1
+                                },
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: { bold: true },
+                                        backgroundColor: { red: 0.9, green: 0.9, blue: 0.9 }
+                                    }
+                                },
+                                fields: 'userEnteredFormat(textFormat,backgroundColor)'
+                            }
+                        }]
+                    }
+                });
+
+                log('Sample workout data added');
+                log('✅ Sheet created successfully!');
+
+                showResult(`
+                    <div class="sheet-link">
+                        🎉 Success! Your Google Sheet has been created!<br><br>
+                        <a href="${spreadsheetUrl}" target="_blank">📊 Open Sheet in Google Sheets</a>
+                    </div>
+                `, 'success');
+
+                // Auto-open the sheet
+                window.open(spreadsheetUrl, '_blank');
+
+            } catch (error) {
+                log(`❌ Failed to create sheet: ${error.message}`, 'error');
+                showResult(`❌ Failed to create sheet: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Simple Google Sheets Test loaded');
+            log(`Current origin: ${window.location.origin}`);
+            log('Click "Test Google API Connection" to start');
+        });
+    </script>
+</body>
+</html>

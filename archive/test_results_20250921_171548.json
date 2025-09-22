@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-09-21T17:15:48.741919",
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "success_rate": 100.0,
+    "total_duration": 5.386383295059204
+  },
+  "results": [
+    {
+      "name": "Credentials Setup",
+      "status": "PASS",
+      "duration": 0.00029015541076660156,
+      "error": null
+    },
+    {
+      "name": "Database Initialization",
+      "status": "PASS",
+      "duration": 2.901254177093506,
+      "error": null
+    },
+    {
+      "name": "Basic CRUD Operations",
+      "status": "PASS",
+      "duration": 2.4848389625549316,
+      "error": null
+    }
+  ]
+}

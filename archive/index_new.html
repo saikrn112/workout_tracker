@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Logger</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 Workout Logger</h1>
+            <p>Track your progress, build your strength</p>
+        </div>
+
+        <div class="card">
+            <div class="template-selector">
+                <h3>Select Workout Template</h3>
+                <div class="template-buttons">
+                    <button class="template-btn" onclick="selectTemplate('upper1')">Upper 1</button>
+                    <button class="template-btn" onclick="selectTemplate('upper2')">Upper 2</button>
+                    <button class="template-btn" onclick="selectTemplate('lower1')">Lower 1</button>
+                    <button class="template-btn" onclick="selectTemplate('lower2')">Lower 2</button>
+                    <button class="template-btn" onclick="showCustomTemplateCreator()">+ Custom</button>
+                </div>
+                
+                <div id="customTemplateCreator" class="custom-template" style="display: none;">
+                    <h4>Create Custom Template</h4>
+                    <input type="text" id="customTemplateName" placeholder="Template name" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+                    <textarea id="customExercises" placeholder="Enter exercises (one per line)" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; height: 100px; resize: vertical;"></textarea>
+                    <button onclick="createCustomTemplate()" style="background: #4facfe; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Create Template</button>
+                </div>
+            </div>
+
+            <div id="exerciseList" class="exercise-list"></div>
+
+            <button id="logWorkoutBtn" class="log-workout-btn" onclick="logWorkout()" disabled>
+                Log Workout
+            </button>
+
+            <div style="text-align: center;">
+                <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+                <button class="export-btn" onclick="toggleGoogleSync()" id="googleSyncBtn">Connect Google Sheets</button>
+                <button class="export-btn" onclick="showSyncStatus()" id="syncStatusBtn" style="display: none;">Sync Status</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Recent Workouts</h3>
+            <div id="workoutHistory" class="workout-history"></div>
+        </div>
+    </div>
+
+    <!-- Loading overlay for sync operations -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Syncing with Google Sheets...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/templates.js"></script>
+    <script src="js/exercises.js"></script>
+    <script src="js/workouts.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/google-sheets.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
