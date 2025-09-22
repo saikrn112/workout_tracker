@@ -1,25 +1,17 @@
 {
   "version": 2,
-  "functions": {
-    "backend_api.py": {
-      "runtime": "python3.9"
-    }
-  },
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend_api.py"
+      "src": "/",
+      "dest": "/index.html"
     },
     {
-      "src": "/",
+      "src": "/mobile.html",
       "dest": "/mobile.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/mobile.html"
+      "dest": "/index.html"
     }
-  ],
-  "env": {
-    "FLASK_ENV": "production"
-  }
+  ]
 }
