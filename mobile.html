@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Workout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .date {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .template-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .template-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .template-btn.active {
+            background: #27ae60;
+        }
+
+        .workout-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .workout-section.active {
+            display: block;
+        }
+
+        .exercise {
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+        }
+
+        .exercise:last-child {
+            border-bottom: none;
+        }
+
+        .exercise-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .previous-data {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .set-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .set-inputs input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .set-inputs input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .add-set-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .add-set-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .save-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+
+        .save-btn:hover {
+            background: #229954;
+        }
+
+        .save-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .template-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .set-inputs {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .set-inputs input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏋️ Quick Workout</h1>
+            <div class="date" id="currentDate"></div>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="template-grid">
+            <button class="template-btn" onclick="selectTemplate('upper1')">Upper 1</button>
+            <button class="template-btn" onclick="selectTemplate('upper2')">Upper 2</button>
+            <button class="template-btn" onclick="selectTemplate('lower1')">Lower 1</button>
+            <button class="template-btn" onclick="selectTemplate('lower2')">Lower 2</button>
+        </div>
+
+        <div id="workoutSection" class="workout-section">
+            <div id="exerciseList"></div>
+            <button class="save-btn" onclick="saveWorkout()" id="saveBtn">Save Workout</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Auto-detect environment
+        let API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:5001/api'
+            : localStorage.getItem('workoutApiBase') || prompt('Enter your backend API URL (e.g., http://your-server:5001/api):') || 'http://localhost:5001/api';
+
+        // Save API base for future use
+        if (window.location.hostname !== 'localhost') {
+            localStorage.setItem('workoutApiBase', API_BASE);
+        }
+
+        // Templates
+        const TEMPLATES = {
+            upper1: ["Pec dec fly", "DB Incline bench press", "DB lateral raises", "Lat pulldown (Moderate load)", "Flat bar cable curls", "Tricep pushdowns"],
+            upper2: ["Hamstring curls lying", "Hip Thrust machine", "DB Deadlifts", "Walking lunges bodyweight", "Calf raises seated", "Reverse Crunches"],
+            lower1: ["Flat bench press DB", "DB Seated shoulder press", "Pronated rows seated", "Rope pullovers", "Bicep hammer curls DB", "Tricep pushdowns"],
+            lower2: ["Adductors Machine", "Abductors Machine", "Leg extensions", "Lying leg curls", "Walking lunges", "Reverse crunches"]
+        };
+
+        let currentTemplate = '';
+        let workoutData = {};
+        let previousData = {};
+
+        // Initialize
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => statusDiv.innerHTML = '', 5000);
+        }
+
+        function showLoading(message = 'Loading...') {
+            document.getElementById('status').innerHTML = `<div class="loading">${message}</div>`;
+        }
+
+        async function selectTemplate(template) {
+            currentTemplate = template;
+
+            // Update button states
+            document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            showLoading('Loading previous workouts...');
+
+            try {
+                // Get previous data for this template
+                await loadPreviousData(template);
+
+                // Show workout section
+                document.getElementById('workoutSection').classList.add('active');
+
+                // Render exercises
+                renderExercises(template);
+
+                showStatus(`Selected ${template.toUpperCase()}! Enter your sets below.`);
+            } catch (error) {
+                showStatus('Error loading data: ' + error.message, 'error');
+            }
+        }
+
+        async function loadPreviousData(template) {
+            try {
+                const response = await fetch(`${API_BASE}/workouts?limit=50`);
+                const data = await response.json();
+
+                if (data.success) {
+                    previousData = {};
+                    const exercises = TEMPLATES[template];
+
+                    // Process previous workouts for this template
+                    exercises.forEach(exercise => {
+                        const exerciseData = data.workouts
+                            .filter(w => w.exercise === exercise)
+                            .slice(0, 3); // Last 3 sessions
+
+                        previousData[exercise] = exerciseData;
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load previous data:', error);
+                previousData = {};
+            }
+        }
+
+        function renderExercises(template) {
+            const exercises = TEMPLATES[template];
+            const container = document.getElementById('exerciseList');
+
+            workoutData = {};
+            container.innerHTML = '';
+
+            exercises.forEach(exercise => {
+                workoutData[exercise] = [];
+
+                const exerciseDiv = document.createElement('div');
+                exerciseDiv.className = 'exercise';
+
+                // Previous data display
+                let previousHtml = '';
+                if (previousData[exercise] && previousData[exercise].length > 0) {
+                    const recent = previousData[exercise].slice(0, 2);
+                    previousHtml = `
+                        <div class="previous-data">
+                            <strong>Previous:</strong><br>
+                            ${recent.map(w => `${w.date}: ${w.weight_lbs}lbs × ${w.reps} reps`).join('<br>')}
+                        </div>
+                    `;
+                }
+
+                exerciseDiv.innerHTML = `
+                    <div class="exercise-name">${exercise}</div>
+                    ${previousHtml}
+                    <div class="sets-container" id="sets-${exercise.replace(/\s+/g, '')}">
+                        <div class="set-inputs">
+                            <input type="number" placeholder="Weight (lbs)" step="0.5" id="weight-${exercise.replace(/\s+/g, '')}-0">
+                            <input type="number" placeholder="Reps" id="reps-${exercise.replace(/\s+/g, '')}-0">
+                            <button class="add-set-btn" onclick="addSet('${exercise}')">+</button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(exerciseDiv);
+            });
+        }
+
+        function addSet(exercise) {
+            const exerciseKey = exercise.replace(/\s+/g, '');
+            const container = document.getElementById(`sets-${exerciseKey}`);
+            const setCount = container.querySelectorAll('.set-inputs').length;
+
+            const setDiv = document.createElement('div');
+            setDiv.className = 'set-inputs';
+            setDiv.innerHTML = `
+                <input type="number" placeholder="Weight (lbs)" step="0.5" id="weight-${exerciseKey}-${setCount}">
+                <input type="number" placeholder="Reps" id="reps-${exerciseKey}-${setCount}">
+                <button class="add-set-btn" onclick="addSet('${exercise}')">+</button>
+            `;
+
+            container.appendChild(setDiv);
+        }
+
+        async function saveWorkout() {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                // Collect all data
+                const workoutSets = [];
+                const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+                Object.keys(workoutData).forEach(exercise => {
+                    const exerciseKey = exercise.replace(/\s+/g, '');
+                    const container = document.getElementById(`sets-${exerciseKey}`);
+                    const setInputs = container.querySelectorAll('.set-inputs');
+
+                    setInputs.forEach((setDiv, index) => {
+                        const weight = setDiv.querySelector(`input[id*="weight"]`).value;
+                        const reps = setDiv.querySelector(`input[id*="reps"]`).value;
+
+                        if (weight && reps) {
+                            workoutSets.push({
+                                date: today,
+                                exercise: exercise,
+                                set_number: index + 1,
+                                weight: parseFloat(weight),
+                                reps: parseInt(reps),
+                                template: currentTemplate
+                            });
+                        }
+                    });
+                });
+
+                if (workoutSets.length === 0) {
+                    throw new Error('Please enter at least one set with weight and reps');
+                }
+
+                // Save to API
+                const response = await fetch(`${API_BASE}/workout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: today,
+                        template: currentTemplate,
+                        exercises: groupSetsByExercise(workoutSets)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus(`Workout saved! ${workoutSets.length} sets logged.`);
+
+                    // Reset form
+                    setTimeout(() => {
+                        document.getElementById('workoutSection').classList.remove('active');
+                        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+                        currentTemplate = '';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to save workout');
+                }
+
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Workout';
+            }
+        }
+
+        function groupSetsByExercise(sets) {
+            const grouped = {};
+            sets.forEach(set => {
+                if (!grouped[set.exercise]) {
+                    grouped[set.exercise] = [];
+                }
+                grouped[set.exercise].push({
+                    weight: set.weight.toString(),
+                    reps: set.reps.toString(),
+                    notes: ''
+                });
+            });
+            return grouped;
+        }
+    </script>
+</body>
+</html>
