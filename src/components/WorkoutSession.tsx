@@ -18,63 +18,162 @@ interface ExerciseData {
   [key: string]: SetData[]
 }
 
+interface PreviousWorkout {
+  date: string
+  exercises: {
+    [exercise: string]: SetData[]
+  }
+}
+
 export default function WorkoutSession({ template, onBack }: WorkoutSessionProps) {
   const [exerciseData, setExerciseData] = useState<ExerciseData>({})
-  const [previousData, setPreviousData] = useState<any>({})
+  const [previousWorkout, setPreviousWorkout] = useState<PreviousWorkout | null>(null)
   const [saving, setSaving] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [todayWorkout, setTodayWorkout] = useState<any>(null)
 
   const templateData = WORKOUT_TEMPLATES[template as keyof typeof WORKOUT_TEMPLATES]
+  const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    // Initialize exercise data with one empty set per exercise
-    const initialData: ExerciseData = {}
-    templateData.exercises.forEach(exercise => {
-      initialData[exercise] = [{ weight: '', reps: '' }]
-    })
-    setExerciseData(initialData)
-
-    // Load previous workout data (mock for now - will be real Supabase data later)
-    loadPreviousData()
+    loadSession()
   }, [template])
 
-  const loadPreviousData = async () => {
-    // TODO: Load from Supabase
-    // For now, use localStorage as temporary storage
-    const stored = localStorage.getItem(`workout-${template}`)
-    if (stored) {
-      setPreviousData(JSON.parse(stored))
+  const loadSession = async () => {
+    // Check if there's already a workout session for today
+    const todaySession = localStorage.getItem(`session-${today}-${template}`)
+
+    if (todaySession) {
+      // Resume existing session
+      const sessionData = JSON.parse(todaySession)
+      setSessionId(sessionData.id)
+      setExerciseData(sessionData.exercises)
+      setTodayWorkout(sessionData)
+    } else {
+      // Create new session
+      const newSessionId = `${Date.now()}-${template}`
+      setSessionId(newSessionId)
+
+      // Initialize with empty sets
+      const initialData: ExerciseData = {}
+      templateData.exercises.forEach(exercise => {
+        initialData[exercise] = [{ weight: '', reps: '' }]
+      })
+      setExerciseData(initialData)
+    }
+
+    // Load most recent previous workout for reference
+    await loadPreviousWorkout()
+  }
+
+  const loadPreviousWorkout = async () => {
+    try {
+      // Get all workouts for this template, excluding today
+      const allWorkouts = getAllStoredWorkouts()
+      const templateWorkouts = allWorkouts
+        .filter(w => w.template === template && w.date !== today)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+      if (templateWorkouts.length > 0) {
+        setPreviousWorkout(templateWorkouts[0])
+      }
+    } catch (error) {
+      console.error('Error loading previous workout:', error)
+    }
+  }
+
+  const getAllStoredWorkouts = () => {
+    const workouts = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('workout-complete-')) {
+        try {
+          const workout = JSON.parse(localStorage.getItem(key) || '{}')
+          workouts.push(workout)
+        } catch (e) {
+          console.error('Error parsing workout:', e)
+        }
+      }
+    }
+    return workouts
+  }
+
+  const saveSession = () => {
+    if (sessionId) {
+      const sessionData = {
+        id: sessionId,
+        date: today,
+        template,
+        exercises: exerciseData,
+        lastSaved: new Date().toISOString()
+      }
+      localStorage.setItem(`session-${today}-${template}`, JSON.stringify(sessionData))
     }
   }
 
   const addSet = (exercise: string) => {
-    setExerciseData(prev => ({
-      ...prev,
-      [exercise]: [...prev[exercise], { weight: '', reps: '' }]
-    }))
+    setExerciseData(prev => {
+      const updated = {
+        ...prev,
+        [exercise]: [...prev[exercise], { weight: '', reps: '' }]
+      }
+      return updated
+    })
+  }
+
+  const removeSet = (exercise: string, setIndex: number) => {
+    setExerciseData(prev => {
+      const updated = {
+        ...prev,
+        [exercise]: prev[exercise].filter((_, idx) => idx !== setIndex)
+      }
+      return updated
+    })
   }
 
   const updateSet = (exercise: string, setIndex: number, field: 'weight' | 'reps', value: string) => {
-    setExerciseData(prev => ({
-      ...prev,
-      [exercise]: prev[exercise].map((set, idx) =>
-        idx === setIndex ? { ...set, [field]: value } : set
-      )
-    }))
+    setExerciseData(prev => {
+      const updated = {
+        ...prev,
+        [exercise]: prev[exercise].map((set, idx) =>
+          idx === setIndex ? { ...set, [field]: value } : set
+        )
+      }
+      // Auto-save session when data changes
+      setTimeout(() => saveSession(), 100)
+      return updated
+    })
+  }
+
+  const hasValidSets = () => {
+    return Object.values(exerciseData).some(sets =>
+      sets.some(set => set.weight.trim() !== '' && set.reps.trim() !== '')
+    )
   }
 
   const saveWorkout = async () => {
+    if (!hasValidSets()) {
+      alert('Please add at least one set with weight and reps before saving.')
+      return
+    }
+
     setSaving(true)
 
     try {
-      // For now, save to localStorage (will be Supabase later)
       const workoutData = {
-        date: new Date().toISOString().split('T')[0],
+        id: sessionId,
+        date: today,
         template,
-        exercises: exerciseData
+        templateName: templateData.name,
+        exercises: exerciseData,
+        completedAt: new Date().toISOString()
       }
 
-      localStorage.setItem(`workout-${template}`, JSON.stringify(workoutData))
-      localStorage.setItem('last-workout', JSON.stringify(workoutData))
+      // Save completed workout
+      localStorage.setItem(`workout-complete-${today}-${template}`, JSON.stringify(workoutData))
+
+      // Clear the session
+      localStorage.removeItem(`session-${today}-${template}`)
 
       alert('Workout saved successfully!')
       onBack()
@@ -84,6 +183,12 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
     } finally {
       setSaving(false)
     }
+  }
+
+  const getPreviousSetData = (exercise: string, setIndex: number) => {
+    if (!previousWorkout?.exercises[exercise]?.[setIndex]) return null
+    const prevSet = previousWorkout.exercises[exercise][setIndex]
+    return `${prevSet.weight}lbs × ${prevSet.reps}`
   }
 
   return (
@@ -100,9 +205,19 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
         <div className="w-12" />
       </div>
 
-      {/* Date */}
-      <div className="text-center mb-6 text-gray-600">
-        {new Date().toLocaleDateString()}
+      {/* Session Info */}
+      <div className="text-center mb-6">
+        <div className="text-lg font-medium text-gray-900">{new Date().toLocaleDateString()}</div>
+        {sessionId && (
+          <div className="text-sm text-gray-500">
+            {todayWorkout ? 'Resuming session' : 'New session'} • Auto-saving
+          </div>
+        )}
+        {previousWorkout && (
+          <div className="text-sm text-blue-600 mt-1">
+            Last {template}: {new Date(previousWorkout.date).toLocaleDateString()}
+          </div>
+        )}
       </div>
 
       {/* Exercises */}
@@ -111,18 +226,28 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
           <div key={exercise} className="bg-white rounded-lg border p-4">
             <h3 className="font-semibold mb-3">{exercise}</h3>
 
-            {/* Previous data */}
-            {previousData[exercise] && (
-              <div className="mb-3 p-2 bg-gray-100 rounded text-sm text-gray-600">
-                <strong>Previous:</strong> {previousData[exercise].weight}lbs × {previousData[exercise].reps} reps
+            {/* Previous workout data */}
+            {previousWorkout?.exercises[exercise] && (
+              <div className="mb-3 p-2 bg-blue-50 rounded text-sm">
+                <div className="font-medium text-blue-800 mb-1">
+                  Previous ({new Date(previousWorkout.date).toLocaleDateString()}):
+                </div>
+                <div className="text-blue-700">
+                  {previousWorkout.exercises[exercise].map((set, idx) => (
+                    <span key={idx} className="inline-block mr-3">
+                      Set {idx + 1}: {set.weight}lbs × {set.reps}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Current sets */}
             <div className="space-y-2">
               {exerciseData[exercise]?.map((set, setIndex) => (
-                <div key={setIndex} className="flex gap-3 items-center">
+                <div key={setIndex} className="flex gap-2 items-center">
                   <span className="w-8 text-sm font-medium">#{setIndex + 1}</span>
+
                   <input
                     type="number"
                     placeholder="Weight"
@@ -130,7 +255,8 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
                     onChange={(e) => updateSet(exercise, setIndex, 'weight', e.target.value)}
                     className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-500">lbs</span>
+                  <span className="text-xs text-gray-500">lbs</span>
+
                   <input
                     type="number"
                     placeholder="Reps"
@@ -138,7 +264,25 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
                     onChange={(e) => updateSet(exercise, setIndex, 'reps', e.target.value)}
                     className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-500">reps</span>
+                  <span className="text-xs text-gray-500">reps</span>
+
+                  {/* Previous set reference */}
+                  {getPreviousSetData(exercise, setIndex) && (
+                    <span className="text-xs text-gray-400 min-w-0 flex-shrink">
+                      (was: {getPreviousSetData(exercise, setIndex)})
+                    </span>
+                  )}
+
+                  {/* Remove set button */}
+                  {exerciseData[exercise].length > 1 && (
+                    <button
+                      onClick={() => removeSet(exercise, setIndex)}
+                      className="text-red-500 hover:text-red-700 px-1"
+                      title="Remove set"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -157,11 +301,18 @@ export default function WorkoutSession({ template, onBack }: WorkoutSessionProps
       {/* Save Button */}
       <button
         onClick={saveWorkout}
-        disabled={saving}
+        disabled={saving || !hasValidSets()}
         className="w-full mt-8 py-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors"
       >
-        {saving ? 'Saving...' : 'Save Workout'}
+        {saving ? 'Saving...' : hasValidSets() ? 'Complete Workout' : 'Add sets to save workout'}
       </button>
+
+      {/* Session status */}
+      {sessionId && (
+        <div className="text-center mt-4 text-sm text-gray-500">
+          Session: {sessionId} • Changes auto-saved
+        </div>
+      )}
     </div>
   )
 }
