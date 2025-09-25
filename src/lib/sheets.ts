@@ -38,13 +38,15 @@ export class SheetsService {
       return
     }
 
-    // Fall back to localStorage for development
-    const storedConfig = localStorage.getItem('googleSheetsConfig')
-    if (storedConfig) {
-      try {
-        this.config = JSON.parse(storedConfig)
-      } catch (e) {
-        console.error('Error parsing stored Google config:', e)
+    // Fall back to localStorage for development (only on client side)
+    if (typeof window !== 'undefined') {
+      const storedConfig = localStorage.getItem('googleSheetsConfig')
+      if (storedConfig) {
+        try {
+          this.config = JSON.parse(storedConfig)
+        } catch (e) {
+          console.error('Error parsing stored Google config:', e)
+        }
       }
     }
   }
@@ -145,7 +147,7 @@ export class SheetsService {
           reps: parseInt(row[5] || '0'),
           notes: row[6] || ''
         }
-      }).filter(workout =>
+      }).filter((workout: SheetWorkout) =>
         workout.date &&
         workout.template &&
         workout.exercise &&
@@ -256,7 +258,9 @@ export class SheetsService {
   // Configuration helpers
   setConfig(config: GoogleConfig) {
     this.config = config
-    localStorage.setItem('googleSheetsConfig', JSON.stringify(config))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('googleSheetsConfig', JSON.stringify(config))
+    }
     this.initialized = false // Force re-initialization
   }
 
@@ -270,7 +274,9 @@ export class SheetsService {
 
   clearConfig() {
     this.config = null
-    localStorage.removeItem('googleSheetsConfig')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('googleSheetsConfig')
+    }
     this.initialized = false
   }
 }
