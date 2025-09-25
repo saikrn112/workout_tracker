@@ -5,6 +5,9 @@ import WorkoutTemplates from '@/components/WorkoutTemplates'
 import WorkoutSession from '@/components/WorkoutSession'
 import Settings from '@/components/Settings'
 import ProgressView from '@/components/ProgressView'
+import AuthModal from '@/components/AuthModal'
+import { authService, type AuthState } from '@/lib/auth'
+import { databaseService } from '@/lib/database'
 
 type View = 'templates' | 'session' | 'history' | 'settings' | 'progress'
 
@@ -15,29 +18,141 @@ export default function HomePage() {
   const [activeSession, setActiveSession] = useState<any>(null)
   const [showSessionWarning, setShowSessionWarning] = useState(false)
   const [pendingTemplate, setPendingTemplate] = useState<string | null>(null)
+  const [authState, setAuthState] = useState<AuthState>({ user: null, session: null, loading: true })
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [migrationStatus, setMigrationStatus] = useState<'idle' | 'migrating' | 'completed'>('idle')
 
   useEffect(() => {
-    checkForActiveSession()
-    loadWorkoutHistory()
-  }, [])
+    const unsubscribe = authService.subscribe((state) => {
+      setAuthState(state)
 
-  const checkForActiveSession = () => {
-    // Check for any active session
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key?.startsWith('session-')) {
-        try {
-          const sessionData = JSON.parse(localStorage.getItem(key) || '{}')
+      // If user just signed in and we haven't migrated data yet
+      if (state.user && migrationStatus === 'idle') {
+        handleDataMigration()
+      }
+
+      // Load data when authenticated
+      if (state.user && !state.loading) {
+        loadWorkoutHistory()
+        checkForActiveSession()
+      }
+    })
+
+    return unsubscribe
+  }, [migrationStatus])
+
+  const handleDataMigration = async () => {
+    if (migrationStatus !== 'idle') return
+
+    setMigrationStatus('migrating')
+    try {
+      const { success, error } = await databaseService.migrateLocalStorageData()
+      if (success) {
+        setMigrationStatus('completed')
+      } else {
+        console.error('Migration failed:', error)
+        setMigrationStatus('idle')
+      }
+    } catch (error) {
+      console.error('Migration error:', error)
+      setMigrationStatus('idle')
+    }
+  }
+
+  const checkForActiveSession = async () => {
+    if (!authState.user) {
+      // Not authenticated - check localStorage only
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith('session-')) {
+          try {
+            const sessionData = JSON.parse(localStorage.getItem(key) || '{}')
+            setActiveSession(sessionData)
+            return
+          } catch (e) {
+            console.error('Error parsing session:', e)
+          }
+        }
+      }
+      return
+    }
+
+    // Authenticated - check database for active sessions
+    try {
+      const today = new Date().toISOString().split('T')[0]
+
+      // Check all templates for today's active sessions
+      const templates = ['upper1', 'upper2', 'lower1', 'lower2']
+
+      for (const template of templates) {
+        const { session, error } = await databaseService.getSession(today, template)
+        if (!error && session) {
+          // Transform database format to app format
+          const sessionData = {
+            id: session.id,
+            date: session.date,
+            template: session.template,
+            exercises: session.session_data?.exercises || {},
+            lastSaved: session.last_saved
+          }
           setActiveSession(sessionData)
           return
-        } catch (e) {
-          console.error('Error parsing session:', e)
+        }
+      }
+
+      // No active database session - check localStorage as fallback
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith('session-')) {
+          try {
+            const sessionData = JSON.parse(localStorage.getItem(key) || '{}')
+            setActiveSession(sessionData)
+            return
+          } catch (e) {
+            console.error('Error parsing session:', e)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for active sessions:', error)
+      // Fallback to localStorage check if database fails
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith('session-')) {
+          try {
+            const sessionData = JSON.parse(localStorage.getItem(key) || '{}')
+            setActiveSession(sessionData)
+            return
+          } catch (e) {
+            console.error('Error parsing session:', e)
+          }
         }
       }
     }
   }
 
-  const loadWorkoutHistory = () => {
+  const loadWorkoutHistory = async () => {
+    if (!authState.user) {
+      setWorkoutHistory([])
+      return
+    }
+
+    try {
+      const { workouts, error } = await databaseService.getWorkouts()
+      if (error) {
+        console.error('Error loading workout history:', error)
+        // Fallback to localStorage if database fails
+        loadLocalStorageHistory()
+      } else {
+        setWorkoutHistory(workouts)
+      }
+    } catch (error) {
+      console.error('Error loading workout history:', error)
+      loadLocalStorageHistory()
+    }
+  }
+
+  const loadLocalStorageHistory = () => {
     const workouts = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
@@ -50,12 +165,17 @@ export default function HomePage() {
         }
       }
     }
-
     workouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     setWorkoutHistory(workouts)
   }
 
   const handleTemplateSelect = (template: string) => {
+    // Check if user is authenticated
+    if (!authState.user) {
+      setShowAuthModal(true)
+      return
+    }
+
     if (activeSession && activeSession.template !== template) {
       setPendingTemplate(template)
       setShowSessionWarning(true)
@@ -66,6 +186,13 @@ export default function HomePage() {
     setCurrentView('session')
   }
 
+  const handleSignOut = async () => {
+    await authService.signOut()
+    setWorkoutHistory([])
+    setActiveSession(null)
+    setCurrentView('templates')
+  }
+
   const handleResumeSession = () => {
     setSelectedTemplate(activeSession.template)
     setCurrentView('session')
@@ -73,7 +200,17 @@ export default function HomePage() {
     setPendingTemplate(null)
   }
 
-  const handleDiscardSession = () => {
+  const handleDiscardSession = async () => {
+    if (authState.user && activeSession) {
+      // Delete from database if authenticated
+      try {
+        await databaseService.deleteSession(activeSession.date, activeSession.template)
+      } catch (error) {
+        console.error('Error deleting session from database:', error)
+      }
+    }
+
+    // Also remove from localStorage
     const sessionKey = `session-${activeSession.date}-${activeSession.template}`
     localStorage.removeItem(sessionKey)
     setActiveSession(null)
@@ -93,7 +230,29 @@ export default function HomePage() {
     setSelectedTemplate(null)
     setCurrentView('templates')
     checkForActiveSession()
-    loadWorkoutHistory()
+    if (authState.user) {
+      loadWorkoutHistory()
+    }
+  }
+
+  // Loading state
+  if (authState.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show auth modal if needed
+  if (showAuthModal) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      </div>
+    )
   }
 
   // Session Warning Modal
