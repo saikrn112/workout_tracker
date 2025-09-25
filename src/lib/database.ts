@@ -43,6 +43,10 @@ export class DatabaseService {
   // Workout operations
   async createWorkout(workoutData: WorkoutData, sets: WorkoutSetData[]): Promise<{ workout: any, error: any }> {
     try {
+      if (!supabase) {
+        return { workout: null, error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { workout: null, error: 'User not authenticated' }
@@ -86,6 +90,10 @@ export class DatabaseService {
 
   async getWorkouts(): Promise<{ workouts: any[], error: any }> {
     try {
+      if (!supabase) {
+        return { workouts: [], error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { workouts: [], error: 'User not authenticated' }
@@ -129,6 +137,10 @@ export class DatabaseService {
 
   async getWorkoutsByTemplate(template: string, limit = 10): Promise<{ workouts: any[], error: any }> {
     try {
+      if (!supabase) {
+        return { workouts: [], error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { workouts: [], error: 'User not authenticated' }
@@ -174,6 +186,10 @@ export class DatabaseService {
   // Session operations
   async saveSession(sessionData: WorkoutSessionData): Promise<{ session: any, error: any }> {
     try {
+      if (!supabase) {
+        return { session: null, error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { session: null, error: 'User not authenticated' }
@@ -199,6 +215,10 @@ export class DatabaseService {
 
   async getSession(date: string, template: string): Promise<{ session: any, error: any }> {
     try {
+      if (!supabase) {
+        return { session: null, error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { session: null, error: 'User not authenticated' }
@@ -220,6 +240,10 @@ export class DatabaseService {
 
   async deleteSession(date: string, template: string): Promise<{ error: any }> {
     try {
+      if (!supabase) {
+        return { error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { error: 'User not authenticated' }
@@ -241,12 +265,20 @@ export class DatabaseService {
   // Migration helper
   async migrateLocalStorageData(): Promise<{ success: boolean, error: any }> {
     try {
+      if (!supabase) {
+        return { success: false, error: 'Supabase not configured' }
+      }
+
       const { user } = authService.getState()
       if (!user) {
         return { success: false, error: 'User not authenticated' }
       }
 
-      // Check if already migrated
+      // Check if already migrated (only on client side)
+      if (typeof window === 'undefined') {
+        return { success: false, error: 'Migration only available on client side' }
+      }
+
       const migrated = localStorage.getItem('workout-data-migrated')
       if (migrated) {
         return { success: true, error: null }

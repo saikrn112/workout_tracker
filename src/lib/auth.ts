@@ -28,17 +28,20 @@ export class AuthService {
   }
 
   private async initialize() {
-    // Get initial session
-    const { data: { session } } = await supabase.auth.getSession()
-    this.authState = {
-      user: session?.user || null,
-      session,
-      loading: false
+    if (!supabase) {
+      // Supabase not available - set loading to false with no user
+      this.authState = {
+        user: null,
+        session: null,
+        loading: false
+      }
+      this.notifyListeners()
+      return
     }
-    this.notifyListeners()
 
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    try {
+      // Get initial session
+      const { data: { session } } = await supabase.auth.getSession()
       this.authState = {
         user: session?.user || null,
         session,
@@ -46,12 +49,32 @@ export class AuthService {
       }
       this.notifyListeners()
 
-      // Handle sign out
-      if (event === 'SIGNED_OUT') {
-        // Clear any cached data
-        localStorage.removeItem('workout-data-migrated')
+      // Listen for auth changes
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        this.authState = {
+          user: session?.user || null,
+          session,
+          loading: false
+        }
+        this.notifyListeners()
+
+        // Handle sign out
+        if (event === 'SIGNED_OUT') {
+          // Clear any cached data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('workout-data-migrated')
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Error initializing auth service:', error)
+      this.authState = {
+        user: null,
+        session: null,
+        loading: false
       }
-    })
+      this.notifyListeners()
+    }
   }
 
   private notifyListeners() {
@@ -74,6 +97,10 @@ export class AuthService {
   }
 
   public async signInWithGoogle() {
+    if (!supabase) {
+      return { data: null, error: { message: 'Supabase not configured' } }
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -84,6 +111,10 @@ export class AuthService {
   }
 
   public async signInWithEmail(email: string, password: string) {
+    if (!supabase) {
+      return { data: null, error: { message: 'Supabase not configured' } }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -92,6 +123,10 @@ export class AuthService {
   }
 
   public async signUpWithEmail(email: string, password: string) {
+    if (!supabase) {
+      return { data: null, error: { message: 'Supabase not configured' } }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password
@@ -100,11 +135,19 @@ export class AuthService {
   }
 
   public async signOut() {
+    if (!supabase) {
+      return { error: null }
+    }
+
     const { error } = await supabase.auth.signOut()
     return { error }
   }
 
   public async resetPassword(email: string) {
+    if (!supabase) {
+      return { data: null, error: { message: 'Supabase not configured' } }
+    }
+
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`
     })
