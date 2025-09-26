@@ -45,4 +45,4 @@ workout_app/
 
 ## Development
 
-The current implementation uses Google Sheets as a live database. See `DESIGN_PROPOSAL.md` for planned SQLite + background sync architecture improvements.
+The current implementation uses Google Sheets as a live database. See `DESIGN_PROPOSAL.md` for planned SQLite + background sync architecture improvements.# Trigger redeployment for environment variables
