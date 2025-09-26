@@ -73,8 +73,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         </div>
 
         <div className="space-y-4">
-          {/* Temporarily disable Google auth until configured */}
-          {false && (
+          {/* Google Sign In */}
             <>
               <button
                 onClick={handleGoogleAuth}
@@ -99,7 +98,15 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 </div>
               </div>
             </>
-          )}
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
+          </div>
 
           {/* Email/Password Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
